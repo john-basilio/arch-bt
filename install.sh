@@ -39,20 +39,16 @@ fi
 echo "      --------------------------------------------------------------------------"
 echo "              Making necessary preparation ands downloading updates..."
 echo "      --------------------------------------------------------------------------"
-pacman -Sy
-pacman-key --init
-pacman-key --populate
-pacman -S archlinux-keyring --noconfirm --needed
 pacman -S btrfs-progs  --noconfirm --needed
 
 #<------------------------------------->
 
 # User creation
 
-read -p "$(echo -e '\n \n       Enter your USERNAME: \n')" USERNAME
-read -p "$(echo -e '\n \n       Enter your USER PASSWORD: \n')" USERPASS
-read -p "$(echo -e '\n \n       Enter your HOST NAME: \n')" HOSTNAME
-read -p "$(echo -e '\n \n       Enter your ROOT PASSWORD: \n        (Different from USER PASSWORD) \n')" ROOTPASS
+read -p "$(echo -e '\n \n       Enter your USERNAME: \n \n \n')" USERNAME
+read -p "$(echo -e '\n \n       Enter your USER PASSWORD: \n \n \n')" USERPASS
+read -p "$(echo -e '\n \n       Enter your HOST NAME: \n \n \n')" HOSTNAME
+read -p "$(echo -e '\n \n       Enter your ROOT PASSWORD: \n \n \n        (Different from USER PASSWORD) \n')" ROOTPASS
 
 echo "      ------------------------------------------------------------------------------------------"
 echo "              Username: $USERNAME, User Password: $USERPASS, Root Password: $ROOTPASS"
@@ -77,8 +73,8 @@ indent() {
 lsblk | indent 15
 
 # Defining partitions
-read -p "$(echo -e '\n       Enter your EFI partition (/dev/$partition): \n')" EFIPARTITION
-read -p "$(echo -e '\n       Enter your ROOT partition (/dev/$partition): \n')" ROOTPARTITION
+read -p "$(echo -e '\n       Enter your EFI partition (/dev/$partition): \n \n \n')" EFIPARTITION
+read -p "$(echo -e '\n       Enter your ROOT partition (/dev/$partition): \n \n \n')" ROOTPARTITION
 
 # Final review of partitions
 lsblk | indent 25
@@ -98,17 +94,18 @@ btrfs subvolume create /mnt/{@,@home,@pkg,@log,@snapshots}
 umount -l /mnt
 
 # Creating mounting directories for the subvolumes
+mkdir /mnt/boot
+mount $EFIPARTITION /mnt/boot
 mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@ $ROOTPARTITION /mnt
 mkdir /mnt/home
-mkdir -p /mnt/var/cache/pacman/pkg
-mkdir -p /mnt/var/log
-mkdir /mnt/.snapshots
-mkdir /mnt/boot
 mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@home $ROOTPARTITION /mnt/home
+mkdir -p /mnt/var/cache/pacman/pkg
 mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@pkg $ROOTPARTITION /mnt/var/cache/pacman/pkg
+mkdir -p /mnt/var/log
 mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@log $ROOTPARTITION /mnt/var/log
+mkdir /mnt/.snapshots
 mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@snapshots $ROOTPARTITION /mnt/.snapshots
-mount $EFIPARTITION /mnt/boot
+
 
 
 if [ $? -eq 0 ]; then
