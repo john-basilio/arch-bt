@@ -1,49 +1,6 @@
 #!/usr/bin/env bash
 
-# Enable case-insensitive matching
-shopt -s nocasematch
-
-echo ""
-echo "                 _____   _____ _    _        ____ _______ "
-echo "           /\   |  __ \ / ____| |  | |      |  _ \__   __|"
-echo "          /  \  | |__) | |    | |__| |______| |_) | | |  "
-echo "         / /\ \ |  _  /| |    |  __  |______|  _ <  | |  "
-echo "        / ____ \| | \ \| |____| |  | |      | |_) | | |  "
-echo "       /_/    \_\_|  \_\\\_____|_|  |_|      |____/  |_|   "
-echo "      "
-echo "      "
-echo ""
-echo "      Github: github.com/john-basilio"
-echo "      Repo:   github.com/john-basilio/arch-bt"
-echo ""
-echo "      Note: Please read the preparation instructions from my github repo. Highly recommended for newbies like me."
-echo ""
-echo "      If you haven't done it, please use cfdisk to make an EFI partition with type \"EFI system\" and your ROOT partition with type \"Linux Filesystem\"."
-echo "      Some options that you might be interested are pre-defined (The kernel, cpu driver,gpu driver, and bootloader for example)."
-echo "      Feel free to visit my repo and edit the script to suit your needs."
-echo ""
-echo ""
-
-######################################
-# Confirmation before starting the script
-read -p "       Do you still want to continue? [y/n] \n \n \n" startScript
-
-if [[ $startScript =~ ^[Yy]$ ]]; then
-    echo "      -------------------------------------------------"
-    echo "                        Proceeding..."
-    echo "      -------------------------------------------------"
-else
-    exit
-fi
-#<------------------------------------->
-
-# User default password (Needs to be changed after installation)
-USERNAME='user123'
-USERPASS='pass123'
-ROOTPASS='root123'
-HOSTNAME='host123'
-
-#<------------------------------------->
+>
 
 clear
 
@@ -78,17 +35,27 @@ btrfs subvolume create /mnt/{@,@home,@pkg,@log,@snapshots}
 umount -l /mnt
 
 # Creating mounting directories for the subvolumes
-mkdir /mnt/boot
-mount $EFIPARTITION /mnt/boot
-mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@ $ROOTPARTITION /mnt
-mkdir /mnt/home
-mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@home $ROOTPARTITION /mnt/home
-mkdir -p /mnt/var/cache/pacman/pkg
-mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@pkg $ROOTPARTITION /mnt/var/cache/pacman/pkg
-mkdir -p /mnt/var/log
-mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@log $ROOTPARTITION /mnt/var/log
-mkdir /mnt/.snapshots
-mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@snapshots $ROOTPARTITION /mnt/.snapshots
+
+mkdir -p /mnt/archinstall/boot
+
+mount $EFIPARTITION /mnt/archinstall/boot
+
+mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@ $ROOTPARTITION /mnt/archinstall/
+
+mkdir -p /mnt/archinstall/home
+
+mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@home $ROOTPARTITION /mnt/archinstall/home
+
+mkdir -p /mnt/archinstall/var/cache/pacman/pkg
+
+mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@pkg $ROOTPARTITION /mnt/archinstall/var/cache/pacman/pkg
+
+mkdir -p /mnt/archinstall/var/log
+
+mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@log $ROOTPARTITION /mnt/archinstall/var/log
+
+mkdir /mnt/archinstall/.snapshots
+mount -o noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@snapshots $ROOTPARTITION /mnt/archinstall/.snapshots
 
 
 
@@ -102,92 +69,3 @@ echo "             Error encountered, exiting..."
 echo "      --------------------------------------------"
     exit 1
 fi
-
-# Installing base system
-echo "      -------------------------------------------------"
-echo "               Installing the base system..."
-echo "      -------------------------------------------------"
-pacstrap /mnt base base-devel #--noconfirm --needed
-
-# Installing the kernel
-echo "      -------------------------------------------------"
-echo "                  Installing the kernel"
-echo "      -------------------------------------------------"
-pacstrap /mnt linux linux-firmware --noconfirm --needed
-
-#Install packages
-echo "      -------------------------------------------------"
-echo "                  Installing the necessary packages"
-echo "      -------------------------------------------------"
-pacstrap /mnt iwd networkmanager network-manager-applet wireless_tools nano intel-ucode git firefox xf86-video-nouveau mesa grub --noconfirm --needed
-
-# Generate fstab entries for each subvolume
-echo "      -------------------------------------------------"
-echo "                     Generating fstab"
-echo "      -------------------------------------------------"
-
-UUID=$(blkid "$ROOTPARTITION" | awk '/^\/dev\//{print $2}' | cut -d'"' -f2)
-
-echo "UUID=$UUID /mnt btrfs defaults,noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@ 0 0" >> /mnt/etc/fstab
-echo "UUID=$UUID /mnt/home btrfs defaults,noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@home 0 0" >> /mnt/etc/fstab
-echo "UUID=$UUID /mnt/var/cache/pacman/pkg btrfs defaults,noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@pkg 0 0" >> /mnt/etc/fstab
-echo "UUID=$UUID /mnt/var/log btrfs defaults,noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@log 0 0" >> /mnt/etc/fstab
-echo "UUID=$UUID /mnt/.snapshots btrfs defaults,noatime,compress=zstd:5,discard=async,space_cache=v2,subvol=@snapshots 0 0" >> /mnt/etc/fstab
-
-# Installing and configuring grub
-echo "      -------------------------------------------------"
-echo "                      Configuring GRUB"
-echo "      -------------------------------------------------"
-grub-install --target=x86_64-efi --efi-directory=$EFIPARTITION --bootloader-id="I use ARCH btw."
-grub-mkconfig -o /mnt/boot/grub/grub.cfg
-
-echo "      ------------------------------------------------------------------------------------------------"
-echo "                  Done configuring grub, proceeding with final configurations with chroot"
-echo "      ------------------------------------------------------------------------------------------------"
-# Creating a new script for final configurations to run on chroot
-cat <<REALEND > /mnt/next.sh
-useradd -m $USERNAME
-usermod -aG wheel,storage,power,audio $USERNAME
-echo $USERNAME:$USERPASS | chpasswd
-echo "root:$ROOTPASS" | chpasswd
-sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-
-echo "-------------------------------------------------"
-echo "        Setting up language and locale"
-echo "-------------------------------------------------"
-sed -i 's/^#en_PH.UTF-8 UTF-8/en_PH.UTF-8 UTF-8/' /etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-
-ln -sf /usr/share/zoneinfo/Asia/Manila /etc/localtime
-hwclock --systohc
-
-echo "$HOSTNAME" > /etc/hostname
-cat <<EOF > /etc/hosts
-127.0.0.1	localhost
-::1			localhost
-127.0.1.1	arch.localdomain	arch
-EOF
-
-echo "-------------------------------------------------"
-echo "          Display and Audio Drivers"
-echo "-------------------------------------------------"
-
-pacman -S xorg pulseaudio --noconfirm --needed
-
-systemctl enable NetworkManager 
-
-pacman -S xfce4 xfce4-goodies lightdm lightdm-gtk-greeter --noconfirm --needed
-systemctl enable lightdm
-
-
-echo "-------------------------------------------------"
-echo "      Install Complete, You may reboot now."
-echo "-------------------------------------------------"
-echo ""
-echo "Thanks for using my script!"
-echo "Also check out my repo for credits!"
-
-REALEND
-
-arch-chroot /mnt sh next.sh
