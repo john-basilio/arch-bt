@@ -26,7 +26,7 @@ echo ""
 
 ######################################
 # Confirmation before starting the script
-read -p "       Do you still want to continue? [y/n]" startScript
+read -p "       Do you still want to continue? [y/n] \n \n \n" startScript
 
 if [[ $startScript =~ ^[Yy]$ ]]; then
     echo "      -------------------------------------------------"
@@ -35,33 +35,17 @@ if [[ $startScript =~ ^[Yy]$ ]]; then
 else
     exit
 fi
+#<------------------------------------->
 
-echo "      --------------------------------------------------------------------------"
-echo "              Making necessary preparation ands downloading updates..."
-echo "      --------------------------------------------------------------------------"
-pacman -S btrfs-progs  --noconfirm --needed
+# User default password (Needs to be changed after installation)
+USERNAME='user123'
+USERPASS='pass123'
+ROOTPASS='root123'
+HOSTNAME='host123'
 
 #<------------------------------------->
 
-# User creation
-
-read -p "$(echo -e '\n \n       Enter your USERNAME: \n \n \n')" USERNAME
-read -p "$(echo -e '\n \n       Enter your USER PASSWORD: \n \n \n')" USERPASS
-read -p "$(echo -e '\n \n       Enter your HOST NAME: \n \n \n')" HOSTNAME
-read -p "$(echo -e '\n \n       Enter your ROOT PASSWORD: \n \n \n        (Different from USER PASSWORD) \n')" ROOTPASS
-
-echo "      ------------------------------------------------------------------------------------------"
-echo "              Username: $USERNAME, User Password: $USERPASS, Root Password: $ROOTPASS"
-echo "      ------------------------------------------------------------------------------------------"
-echo ""
-echo ""
-echo "      -------------------------------------------------------------"
-echo "              Proceeding with defining target partitions..."
-echo "      -------------------------------------------------------------"
-echo ""
-echo ""
-
-#<------------------------------------->
+clear
 
 # Indented lsblk function
 indent() {
