@@ -14,8 +14,8 @@ indent() {
 lsblk | indent 15
 
 # Defining partitions
-read -p "$(echo -e '\n       Enter your EFI partition (/dev/$partition): \n \n \n')" EFIPARTITION
-read -p "$(echo -e '\n       Enter your ROOT partition (/dev/$partition): \n \n \n')" ROOTPARTITION
+read -p "$(echo -e '\n       Enter your EFI partition (/dev/$partition):')" EFIPARTITION
+read -p "$(echo -e '\n       Enter your ROOT partition (/dev/$partition):')" ROOTPARTITION
 
 # Final review of partitions
 lsblk | indent 25
